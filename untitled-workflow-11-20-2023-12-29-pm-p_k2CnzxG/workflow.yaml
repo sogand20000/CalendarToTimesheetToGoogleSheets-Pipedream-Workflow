@@ -1,0 +1,26 @@
+schema: workflow/2022.04
+name: AddEvent
+settings:
+  error_notification: true
+triggers:
+- id: hi_q7HMd1k
+steps:
+- namespace: createFormatDateTime
+  runtime: nodejs18.x
+  uses: "@ray-tech/createFormatDateTime@0.0.1"
+  props:
+    date: "{{steps.trigger.event.body.Date}}"
+    endTime: "{{steps.trigger.event.body.EndTime}}"
+    startTime: "{{steps.trigger.event.body.StartTime}}"
+- namespace: saveEvent
+  runtime: nodejs18.x
+  uses: "@ray-tech/saveEvent@0.0.2"
+  props:
+    google_calendar:
+      authProvisionId: apn_wGhp5eX
+    calendarId: "{{steps.trigger.event.body.Email}}"
+    startDateTime: "{{steps.createFormatDateTime.$return_value.startDateTime}}"
+    endDateTime: "{{steps.createFormatDateTime.$return_value.endDateTime}}"
+    summary: "{{steps.trigger.event.body.Summary}}"
+    eventId: "{{steps.trigger.event.body.EventID}}"
+

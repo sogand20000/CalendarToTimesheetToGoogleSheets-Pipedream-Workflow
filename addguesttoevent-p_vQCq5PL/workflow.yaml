@@ -1,0 +1,26 @@
+schema: workflow/2022.04
+name: AddGuestToEvent
+settings:
+  error_notification: true
+triggers:
+- id: hi_jDHQXEw
+steps:
+- namespace: findEventByEventID
+  runtime: nodejs18.x
+  uses: "@ray-tech/findEventByEventID@0.0.1"
+  props:
+    google_calendar:
+      authProvisionId: apn_wGhp5eX
+    calendarId: "{{steps.trigger.event.body.HostEmail}}"
+    eventID: "{{steps.trigger.event.body.EventID}}"
+- namespace: updateEvent
+  runtime: nodejs18.x
+  uses: "@ray-tech/addGuestToEvent@0.0.1"
+  props:
+    google_calendar:
+      authProvisionId: apn_wGhp5eX
+    calendarId: "{{steps.trigger.event.body.HostEmail}}"
+    eventForUpdate: "{{steps.findEventByEventID.$return_value}}"
+    eventIDTrigger: "{{steps.trigger.event.body.EventID}}"
+    emailGuest: "{{steps.trigger.event.body.GuestEmail}}"
+

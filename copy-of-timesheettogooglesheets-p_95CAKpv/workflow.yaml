@@ -1,0 +1,80 @@
+schema: workflow/2022.04
+name: TimesheetToGooglesheets
+inactive: true
+settings:
+  error_notification: true
+triggers:
+- id: dc_bPu7Pjq
+steps:
+- namespace: findCalendar
+  runtime: nodejs18.x
+  uses: "@ray-tech/findCalendar@0.0.1"
+  props:
+    google_calendar:
+      authProvisionId: apn_wGhp5eX
+    calendarId: "{{steps.trigger.event.organizer.email}}"
+- namespace: findGoogleTimesheetId
+  runtime: nodejs18.x
+  uses: "@ray-tech/splitString@0.0.1"
+  props:
+    string: "{{steps.findCalendar.$return_value.description}}"
+- namespace: eventList
+  runtime: nodejs18.x
+  uses: "@ray-tech/eventList@0.0.2"
+  props:
+    google_calendar:
+      authProvisionId: apn_wGhp5eX
+    calendarId: "{{steps.trigger.event.organizer.email}}"
+    eventInput: "{{steps.trigger.event}}"
+    description: Remote
+- namespace: dateTimeFormat
+  runtime: nodejs18.x
+  uses: "@ray-tech/dateTimeFormat@0.0.1"
+  props:
+    eventList: "{{steps.eventList.$return_value.items}}"
+- namespace: findGoogleSheetId
+  runtime: nodejs18.x
+  uses: "@ray-tech/splitString@0.0.1"
+  props:
+    string: "{{steps.findCalendar.$return_value.description}}"
+- namespace: upsert_row
+  runtime: nodejs18.x
+  uses: google_sheets-upsert-row@0.1.2
+  props:
+    googleSheets:
+      authProvisionId: apn_b6hLJod
+    sheetId: '{{steps.findGoogleSheetId.$return_value["*GoogleSheetId"]}}'
+    sheetName: Sheet3
+    insert: |-
+      {{[
+      steps.dateTimeFormat.$return_value[0],
+      '',
+
+      steps.dateTimeFormat.$return_value[1],
+      steps.dateTimeFormat.$return_value[2],
+      steps.dateTimeFormat.$return_value[3],
+
+
+      steps.dateTimeFormat.$return_value[4],
+      steps.dateTimeFormat.$return_value[5],
+      steps.dateTimeFormat.$return_value[6],
+
+
+      steps.dateTimeFormat.$return_value[7],
+      steps.dateTimeFormat.$return_value[8],
+      steps.dateTimeFormat.$return_value[9],
+
+      steps.dateTimeFormat.$return_value[10],
+      steps.dateTimeFormat.$return_value[11],
+      steps.dateTimeFormat.$return_value[12],
+
+      steps.dateTimeFormat.$return_value[13],
+      steps.dateTimeFormat.$return_value[14],
+      steps.dateTimeFormat.$return_value[15],
+
+      '',steps.trigger.event.id,
+        steps.trigger.event.summary
+      ]}}
+    column: A
+    value: "{{steps.dateTimeFormat.$return_value[0]}}"
+

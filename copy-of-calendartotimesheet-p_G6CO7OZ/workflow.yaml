@@ -1,0 +1,57 @@
+schema: workflow/2022.04
+name: CalendarToTimesheet
+inactive: true
+settings:
+  error_notification: true
+triggers:
+- id: dc_DvuZApB
+steps:
+- namespace: findCalendar
+  runtime: nodejs18.x
+  uses: "@ray-tech/findCalendar@0.0.1"
+  props:
+    google_calendar:
+      authProvisionId: apn_wGhp5eX
+    calendarId: "{{steps.trigger.event.organizer.email}}"
+- namespace: findTimesheetCalendarId
+  runtime: nodejs18.x
+  uses: "@ray-tech/splitString@0.0.1"
+  props:
+    string: "{{steps.findCalendar.$return_value.description}}"
+- namespace: eventList
+  runtime: nodejs18.x
+  uses: "@ray-tech/eventList@0.0.3"
+  props:
+    google_calendar:
+      authProvisionId: apn_wGhp5eX
+    calendarId: '{{steps.findTimesheetCalendarId.$return_value["*TimesheetCalendarId"]}}'
+    eventInput: "{{steps.trigger.event}}"
+    description: Remote
+- namespace: selectEventForUpdate
+  runtime: nodejs18.x
+  uses: "@ray-tech/selectEvent@0.0.1"
+  props:
+    google_calendar:
+      authProvisionId: apn_wGhp5eX
+    calendarId: '{{steps.findTimesheetCalendarId.$return_value["*TimesheetCalendar"]}}'
+    eventList: "{{steps.eventList.$return_value}}"
+    eventInput: "{{steps.trigger.event}}"
+- namespace: saveInCalendar
+  runtime: nodejs18.x
+  uses: "@ray-tech/saveInCalendarForCalendarToTimesheet@0.0.7"
+  props:
+    google_calendar:
+      authProvisionId: apn_wGhp5eX
+    calendarId: '{{steps.findTimesheetCalendarId.$return_value["*TimesheetCalendarId"]}}'
+    eventInput: "{{steps.trigger.event}}"
+    eventForUpdate: "{{steps.selectEventForUpdate.$return_value[0]}}"
+- namespace: deleteEvent
+  runtime: nodejs18.x
+  uses: "@ray-tech/deleteEventbyCheckIsDeleted@0.0.1"
+  props:
+    google_calendar:
+      authProvisionId: apn_wGhp5eX
+    calendarId: '{{steps.findTimesheetCalendarId.$return_value["*TimesheetCalendarId"]}}'
+    isDeleted: "{{steps.saveInCalendar.$return_value}}"
+    eventId: "{{steps.selectEventForUpdate.$return_value[0].id}}"
+
